@@ -1,6 +1,18 @@
 import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
+function SignalCard({ title, signal }) {
+  if (!signal) return null
+  return (
+    <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 16, flex: 1 }}>
+      <h3>{title}</h3>
+      <p><strong>Status:</strong> {signal.status}</p>
+      <p><strong>Score:</strong> {signal.score}</p>
+      <p>{signal.summary}</p>
+    </div>
+  )
+}
+
 function App() {
   const [health, setHealth] = useState(null)
   const [result, setResult] = useState(null)
@@ -69,8 +81,23 @@ function App() {
             {loading ? 'Running...' : 'Run Objective'}
           </button>
         </div>
-        {result && <pre>{JSON.stringify(result, null, 2)}</pre>}
       </section>
+
+      {result && (
+        <section>
+          <h2>Run Result</h2>
+          <p><strong>Ready for human review:</strong> {String(result.ready_for_human_review)}</p>
+          <p><strong>Agent responses:</strong> {result.response_count}</p>
+          <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
+            <SignalCard title="Evaluation" signal={result.evaluation} />
+            <SignalCard title="Trust" signal={result.trust} />
+          </div>
+          <details style={{ marginTop: 16 }}>
+            <summary>Raw response</summary>
+            <pre>{JSON.stringify(result, null, 2)}</pre>
+          </details>
+        </section>
+      )}
 
       <section>
         <h2>Runtime Timeline</h2>
