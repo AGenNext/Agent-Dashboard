@@ -20,6 +20,8 @@ function App() {
   const [result, setResult] = useState(null)
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(false)
+  const [approvalNotes, setApprovalNotes] = useState('')
+  const [approvalResult, setApprovalResult] = useState(null)
 
   const [form, setForm] = useState({
     task_id: 'test-1',
@@ -43,6 +45,7 @@ function App() {
   async function runObjective() {
     setLoading(true)
     setEvents([])
+    setApprovalResult(null)
     const res = await fetch(`${api}/objectives/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,6 +55,21 @@ function App() {
     setResult(data)
     await fetchEvents(form.task_id)
     setLoading(false)
+  }
+
+  async function submitApproval(decision) {
+    const res = await fetch(`${api}/objectives/${form.task_id}/approval`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        decision,
+        reviewer: 'dashboard-user',
+        notes: approvalNotes
+      })
+    })
+    const data = await res.json()
+    setApprovalResult(data)
+    await fetchEvents(form.task_id)
   }
 
   return (
@@ -99,6 +117,25 @@ function App() {
             <summary>Raw response</summary>
             <pre>{JSON.stringify(result, null, 2)}</pre>
           </details>
+        </section>
+      )}
+
+      {result && (
+        <section>
+          <h2>Human Approval</h2>
+          <textarea
+            rows="4"
+            style={{ width: '100%' }}
+            placeholder="Optional approval notes"
+            value={approvalNotes}
+            onChange={(e) => setApprovalNotes(e.target.value)}
+          />
+          <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+            <button onClick={() => submitApproval('approved')}>Approve</button>
+            <button onClick={() => submitApproval('rejected')}>Reject</button>
+            <button onClick={() => submitApproval('changes_requested')}>Request Changes</button>
+          </div>
+          {approvalResult && <pre>{JSON.stringify(approvalResult, null, 2)}</pre>}
         </section>
       )}
 
