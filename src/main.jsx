@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 function SignalCard({ title, signal }) {
@@ -20,8 +20,10 @@ function App() {
   const [result, setResult] = useState(null)
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(false)
+  const [livePolling, setLivePolling] = useState(false)
   const [approvalNotes, setApprovalNotes] = useState('')
   const [approvalResult, setApprovalResult] = useState(null)
+  const pollingRef = useRef(null)
 
   const [form, setForm] = useState({
     task_id: 'test-1',
@@ -39,13 +41,32 @@ function App() {
 
   async function fetchEvents(taskId) {
     const res = await fetch(`${api}/objectives/${taskId}/events`)
-    setEvents(await res.json())
+    const data = await res.json()
+    setEvents(data)
+    return data
+  }
+
+  function startPolling(taskId) {
+    stopPolling()
+    setLivePolling(true)
+    pollingRef.current = setInterval(() => {
+      fetchEvents(taskId)
+    }, 1500)
+  }
+
+  function stopPolling() {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
+    setLivePolling(false)
   }
 
   async function runObjective() {
     setLoading(true)
     setEvents([])
     setApprovalResult(null)
+    startPolling(form.task_id)
     const res = await fetch(`${api}/objectives/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,6 +75,7 @@ function App() {
     const data = await res.json()
     setResult(data)
     await fetchEvents(form.task_id)
+    stopPolling()
     setLoading(false)
   }
 
@@ -101,6 +123,7 @@ function App() {
             {loading ? 'Running...' : 'Run Objective'}
           </button>
         </div>
+        {livePolling && <p>Live stage feed active…</p>}
       </section>
 
       {result && (
@@ -140,7 +163,7 @@ function App() {
       )}
 
       <section>
-        <h2>Runtime Timeline</h2>
+        <h2>Live Stage Feed / Runtime Timeline</h2>
         {events.length === 0 && <p>No events loaded yet.</p>}
         {events.map((event) => (
           <div key={event.event_id} style={{ borderLeft: '3px solid #999', paddingLeft: 12, marginBottom: 12 }}>
