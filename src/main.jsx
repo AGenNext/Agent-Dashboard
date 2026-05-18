@@ -7,7 +7,9 @@ function SignalCard({ title, signal }) {
     <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 16, flex: 1 }}>
       <h3>{title}</h3>
       <p><strong>Status:</strong> {signal.status}</p>
-      <p><strong>Score:</strong> {signal.score}</p>
+      {'score' in signal && <p><strong>Score:</strong> {signal.score}</p>}
+      {'estimated_cost_usd' in signal && <p><strong>Estimated cost:</strong> ${signal.estimated_cost_usd}</p>}
+      {'budget_status' in signal && <p><strong>Budget:</strong> {signal.budget_status}</p>}
       <p>{signal.summary}</p>
     </div>
   )
@@ -91,6 +93,7 @@ function App() {
           <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
             <SignalCard title="Evaluation" signal={result.evaluation} />
             <SignalCard title="Trust" signal={result.trust} />
+            <SignalCard title="FinOps" signal={result.finops} />
           </div>
           <details style={{ marginTop: 16 }}>
             <summary>Raw response</summary>
